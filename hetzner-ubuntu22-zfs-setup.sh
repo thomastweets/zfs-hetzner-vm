@@ -479,12 +479,11 @@ echo "======= partitioning the disk =========="
   for selected_disk in "${v_selected_disks[@]}"; do
     wipefs --all --force "$selected_disk"
     sgdisk --zap-all "$selected_disk"
-    # for UEFI
-    sgdisk -n1:1M:+512M                -t1:EF00 "$selected_disk" # bootloader
-    # for legacy BIOS
-    # sgdisk -a1 -n1:24K:+1000K            -t1:EF02 "$selected_disk"
-    sgdisk -n2:0:+2G                   -t2:BF01 "$selected_disk" # Boot pool
-    sgdisk -n3:0:"$tail_space_parameter" -t3:BF01 "$selected_disk" # Root pool
+    sgdisk -n1:1M:+512M                  -t1:EF00 "$selected_disk" # UEFI bootloader
+    # no separate partition for Swap
+    sgdisk -n2:0:+2G                     -t2:BE00 "$selected_disk" # Boot pool
+    sgdisk -n3:0:"$tail_space_parameter" -t3:BF00 "$selected_disk" # Root pool
+    # sgdisk -a1 -n4:24K:+1000K            -t4:EF02 "$selected_disk" # legacy (BIOS) booting
   done
 
   udevadm settle
@@ -873,7 +872,3 @@ unmount_and_export_fs
 
 echo "======== setup complete, rebooting ==============="
 reboot
-
-#echo "======= setup EFI part 2=========="
-# after reboot?
-#chroot_execute "dpkg-reconfigure grub-efi-amd64"
